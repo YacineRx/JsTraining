@@ -12,6 +12,8 @@ const account1 = {
   pin: 1111,
 };
 
+
+
 const account2 = {
   owner: "Jessica Davis",
   movements: [5000, 3400, -150, -790, -3210, -1000, 8500, -30],
@@ -91,8 +93,6 @@ function displayMovements(movementsTable) {
     containerMovements.insertAdjacentHTML("beforeend" ,html)
   })
 }
-displayMovements(movements);
-
 function caclDisplaySummary(movementsTable) {
   // Cacl & Display Incomes
   let incomes = 0;
@@ -106,13 +106,104 @@ function caclDisplaySummary(movementsTable) {
   labelSumOut.textContent = `${outcomes}.00€`;
 
 }
-caclDisplaySummary(movements)
 
 function createUsernames (accounts) {
-  accounts.forEach((acc) => console.log(acc.owner))
+  accounts.forEach(acc =>
+      acc.username = acc.owner.toLowerCase().split(" ").map(str => str[0]).join(""))
+}
+createUsernames(accounts)
+
+
+function caclBalance (acc) {
+  const currentBalance = acc.movements.reduce((acc, curr) => acc + curr)
+  labelBalance.textContent = `${currentBalance}.00€`;
+  acc.balance = currentBalance;
+}
+// accounts.forEach((acc) => {
+//  caclBalance(acc)
+// })
+
+// 
+
+let currentAccount;
+
+function updateUI(currentAccount) {
+  displayMovements(currentAccount.movements)
+  caclBalance(currentAccount);
+  caclDisplaySummary(currentAccount.movements);
 }
 
-createUsernames(accounts)
+btnLogin.addEventListener("click", function(e) {
+  e.preventDefault()
+  const user = inputLoginUsername.value;
+  const userPin = inputLoginPin.value;
+
+  const verifAccount= accounts.find((acc) => acc.username == user && acc.pin == userPin);
+
+  inputLoginUsername.value = inputLoginPin.value = "";
+  if (verifAccount == undefined) return;
+  currentAccount = verifAccount;
+
+  labelWelcome.textContent = `Welcome Back ${currentAccount.owner.split(" ")[0]}`
+  document.querySelector(".app").style.opacity = 1;
+
+  updateUI(verifAccount)
+
+})
+
+btnTransfer.addEventListener('click', function(e) {
+  e.preventDefault();
+  const transferAccount = inputTransferTo.value;
+  const transferAmount = inputTransferAmount.value;
+
+  inputTransferTo.value = inputTransferAmount.value = ""
+
+  // Verif if transferAccount exist & if the current account has enough amount
+  const transferVerif = accounts.find((acc) => acc.username == transferAccount)
+
+  if (transferVerif == undefined) {
+    console.log("This current does not exists");
+    return;
+  }
+
+  if (transferAmount >= currentAccount.balance && transferAmount > 0) {
+    console.log("You can't transfer");
+    return
+  }
+  // Enlever transferAMount form the current account's movement
+  currentAccount.movements.unshift(-transferAmount);
+  console.log(currentAccount.movements);
+
+  // Add it to transferAccount's movement table
+  transferVerif.movements.unshift(transferAmount)
+
+  updateUI(currentAccount)
+})
+
+
+btnLoan.addEventListener("click", function(e){
+  e.preventDefault();
+  const loanAmount = inputLoanAmount.value;
+
+  
+  currentAccount.movements.unshift(+loanAmount);
+  setTimeout(function(){
+    updateUI(currentAccount)
+  }, 5000)
+
+
+  console.log(+loanAmount);
+})
+
+document.addEventListener("keydown", function(e) {
+  if (e.key == "Escape") {
+    document.querySelector(".app").style.opacity = 0;
+    console.log("keydown");
+  }
+})
+
+const date = new Date();
+
 
 // const tableTest = "abd-xyz-qsdf".split("-");
 // const stringTest = ["qsdf", "abd", "xyz"].join("-");
